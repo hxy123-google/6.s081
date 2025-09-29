@@ -461,6 +461,7 @@ scheduler(void)
       }
       release(&p->lock);
     }
+    //printf("scheduler: no RUNNABLE processes found\n");
   }
 }
 
