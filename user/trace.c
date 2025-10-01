@@ -25,3 +25,4 @@ main(int argc, char *argv[])
   exec(nargv[0], nargv);
   exit(0);
 }
+// make GRADEFLAGS=sleep grade

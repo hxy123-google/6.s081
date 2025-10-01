@@ -119,7 +119,7 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
-
+  p->tracemask=0;
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
     freeproc(p);
@@ -140,7 +140,6 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
-
   return p;
 }
 
@@ -164,6 +163,7 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+  p->tracemask=0;
 }
 
 // Create a user page table for a given process,
@@ -288,21 +288,19 @@ fork(void)
     return -1;
   }
   np->sz = p->sz;
-
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
 
   // Cause fork to return 0 in the child.
   np->trapframe->a0 = 0;
-
+  
   // increment reference counts on open file descriptors.
   for(i = 0; i < NOFILE; i++)
     if(p->ofile[i])
       np->ofile[i] = filedup(p->ofile[i]);
   np->cwd = idup(p->cwd);
-
+  np->tracemask = p->tracemask;
   safestrcpy(np->name, p->name, sizeof(p->name));
-
   pid = np->pid;
 
   release(&np->lock);
@@ -314,7 +312,7 @@ fork(void)
   acquire(&np->lock);
   np->state = RUNNABLE;
   release(&np->lock);
-
+  
   return pid;
 }
 
@@ -653,4 +651,14 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+uint64
+procnum(void)
+{
+  struct proc *p;
+  uint64 cnt=0;
+  for(p = proc; p < &proc[NPROC]; p++){
+    if(p->state!=UNUSED) cnt++;
+  }
+  return cnt;
 }
