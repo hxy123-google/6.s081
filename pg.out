@@ -1,0 +1,14 @@
+echo make clean
+make clean
+make clean || \
+          (echo "'make clean' failed.  HINT: Do you have another running instance of xv6?" && exit 1)
+make[1]: Entering directory '/home/hxy/Desktop/mit/xv6-labs-2021'
+rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
+*/*.o */*.d */*.asm */*.sym \
+user/initcode user/initcode.out kernel/kernel fs.img \
+mkfs/mkfs .gdbinit \
+        user/usys.S \
+user/_cat user/_echo user/_forktest user/_grep user/_init user/_kill user/_ln user/_ls user/_mkdir user/_rm user/_sh user/_stressfs user/_usertests user/_grind user/_wc user/_zombie  user/_pgtbltest \
+ph barrier
+make[1]: Leaving directory '/home/hxy/Desktop/mit/xv6-labs-2021'
+./grade-lab-pgtbl -v
