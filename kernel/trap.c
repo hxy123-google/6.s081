@@ -13,9 +13,7 @@ extern char trampoline[], uservec[], userret[];
 
 // in kernelvec.S, calls kerneltrap().
 void kernelvec();
-
 extern int devintr();
-
 void
 trapinit(void)
 {
@@ -67,7 +65,13 @@ usertrap(void)
     syscall();
   } else if((which_dev = devintr()) != 0){
     // ok
-  } else {
+  } else if(r_scause()==15||r_scause()==13){
+    uint64 va=r_stval();
+    if(cowfault(va)<0){
+      p->killed=1;
+    }         
+  }
+  else {
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
     p->killed = 1;
@@ -86,6 +90,27 @@ usertrap(void)
 //
 // return to user space
 //
+int 
+cowfault(uint64 va){
+  struct proc* p=myproc();
+  pte_t* pte;
+  int is_right=((va < p->sz) // 在进程内存范围内
+    && ((pte=walk(p->pagetable,va,0))!=0)
+    && (*pte & PTE_V) // 页表项存在
+    && (*pte & PTE_COW)); // 页是一个懒复制页
+  if(!is_right) return -1; 
+  uint64 pa= PTE2PA(*pte);
+  uint64 newpa;
+  if((newpa=kopy_page(pa))==0) return -1;
+  uint64 flags;
+  flags=(PTE_FLAGS(*pte) | PTE_W) & ~PTE_COW;
+  uvmunmap(p->pagetable, PGROUNDDOWN(va), 1, 0);
+  if(mappages(p->pagetable,va,1,newpa,flags)==-1){
+    panic("mappages:wrong");
+  }
+  //printf("hhhhpa:%p va:%p vaa:%p\n",walkaddr(p->pagetable,PGROUNDDOWN(va)),va,PGROUNDDOWN(va));
+  return 0;
+}
 void
 usertrapret(void)
 {

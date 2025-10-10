@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "riscv.h": "c",
+        "defs.h": "c",
+        "mutex": "c",
+        "proc.h": "c"
+    }
+}
