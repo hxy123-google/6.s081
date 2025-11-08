@@ -271,7 +271,7 @@ create(char *path, short type, short major, short minor)
     dp->nlink++;  // for ".."
     iupdate(dp);
     // No ip->nlink++ for ".": avoid cyclic ref count.
-    if(dirlink(ip, ".", ip->inum) < 0 || dirlink(ip, "..", dp->inum) < 0)
+    if(dirlink(ip, ".", ip->inum) < 0 || dirlink(ip, "..", dp->inum) < 0)//在ip这个inode中添加.和其inode编号
       panic("create dots");
   }
 

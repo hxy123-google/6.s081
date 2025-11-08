@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "mutex": "c"
+        "mutex": "c",
+        "memory": "c",
+        "semaphore": "c",
+        "stop_token": "c"
     }
 }

@@ -91,7 +91,9 @@ kalloc(void)
   r = kmem[cpu].freelist;
   if(r){
     kmem[cpu].freelist = r->next;
+    release(&kmem[cpu].lock);
   }else{
+    release(&kmem[cpu].lock);
     for(int i=0;i<NCPU;i++){
       if(i==cpu) continue;
       acquire(&kmem[i].lock);
@@ -107,7 +109,7 @@ kalloc(void)
   }
   // if(r)
   //   kmem.freelist = r->next;
-  release(&kmem[cpu].lock);
+  //release(&kmem[cpu].lock);
   if(r)
   memset((char*)r, 5, PGSIZE); // fill with junk
   return (void*)r;
