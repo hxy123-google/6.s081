@@ -141,6 +141,7 @@ bget(uint dev, uint blockno)
           pre=pre->next;
         }
         pre->next=p->next;
+        lru->refcnt=1;
         release(&bcache.headlock[rid]);
         release(&bcache.lock);
         
@@ -150,9 +151,21 @@ bget(uint dev, uint blockno)
       }
     }
   }
+  acquire(&bcache.headlock[HASH(blockno)]);
+  for(b = bcache.head[HASH(blockno)].next; b ; b = b->next){
+    if(b->dev == dev && b->blockno == blockno){
+      b->refcnt++;
+      if(lru){
+        lru->refcnt=0;
+        lru->next=bcache.head[HASH(blockno)].next;
+      }
+      release(&bcache.headlock[HASH(blockno)]);
+      acquiresleep(&b->lock);
+      return b;
+    }
+  }
   if(is_buf||is_find){
     if(lru){
-      acquire(&bcache.headlock[HASH(blockno)]);
       lru->next=bcache.head[HASH(blockno)].next;
       bcache.head[HASH(blockno)].next=lru;
       lru->dev=dev;
@@ -165,6 +178,7 @@ bget(uint dev, uint blockno)
       return lru;
     }
   }
+  release(&bcache.headlock[HASH(blockno)]);
   // Not cached.
   // Recycle the least recently used (LRU) unused buffer.
   panic("bget: no buffers");
